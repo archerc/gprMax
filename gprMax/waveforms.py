@@ -53,6 +53,10 @@ class Waveform(object):
         elif self.type == 'gaussiandotdot' or self.type == 'gaussiandotdotnorm' or self.type == 'ricker':
             self.chi = np.sqrt(2) / self.freq
             self.zeta = np.pi**2 * self.freq**2
+        elif self.type == 'chirp':
+            from ipdb import set_trace
+            set_trace()
+            raise NotImplemented
 
     def calculate_value(self, time, dt):
         """Calculates value of the waveform at a specific time.
