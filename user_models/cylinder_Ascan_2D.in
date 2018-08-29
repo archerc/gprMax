@@ -1,15 +1,193 @@
+以#开头的行是命令，其它的是注释
+
+设置模型的标题
+		title: str1
 #title: A-scan from a metal cylinder buried in a dielectric half-space
+
+设置模型的大小
+		domain: f1 f2 f3
+where f1 f2 f3 are the size of the model in the x, y, and z directions respectively. For example to specify a 500 x 500 x 1000mm model use: #domain: 0.5 0.5 1.0
+这里设置的大小为 24cm x 21cm x 2mm
 #domain: 0.240 0.210 0.002
+
+设置空间步长
+		dx_dy_dz: f1 f2 f3
+Allows you to specify the discretization of space in the x , y and z directions respectively (i.e. Δx
+, Δy, Δz). 
+这里步长为 2mm
 #dx_dy_dz: 0.002 0.002 0.002
+
+设置总仿真时间
+		time_window: f1
 #time_window: 3e-9
 
+设置材料
+Allows you to introduce a material into the model described by a set of constitutive parameters. The syntax of the command is:
+		material: f1 f2 f3 f4 str1
+f1 is the relative permittivity, ϵr
+f2 is the conductivity (Siemens/metre), σ
+f3 is the relative permeability, μr
+f4 is the magnetic loss (Ohms/metre), σ∗
+str1 is an identifier for the material.
+
+For example #material: 3 0.01 1 0 my_sand 
+creates a material called `my_sand` which has a relative permittivity (frequency independent) of ϵr=3, a conductivity of σ=0.01 S/m, and is non-magnetic, i.e. μr=1 and σ∗=0
+这里设置了一种名为 half_space 的相对介电常数为6, 电导率为0，相对磁导率为1， 磁阻为0的非磁性绝缘材料
 #material: 6 0 1 0 half_space
 
+
+设置波形
+		waveform: <类型> <幅度> <中心频率> <名称>
+		waveform: str1 f1 f2 str2
+
+可选的类型有：
+       gaussian 
+            		which is a Gaussian waveform.
+       gaussiandot
+					which is the first derivative of a Gaussian waveform.
+       gaussiandotnorm 
+       				which is the normalised first derivative of a Gaussian waveform.
+       gaussiandotdot 
+       				which is the second derivative of a Gaussian waveform.
+       gaussiandotdotnorm 
+       				which is the normalised second derivative of a Gaussian waveform.
+       ricker 
+       				which is a Ricker (or Mexican hat) waveform, i.e. the negative, normalised second derivative of a Gaussian waveform.
+       gaussianprime
+       				which is the first derivative of a Gaussian waveform, directly derived from the aforementioned gaussian (see notes below).
+       gaussiandoubleprime 
+       				which is the second derivative of a Gaussian waveform, directly derived from the aforementioned gaussian (see notes below).
+       sine 
+       				which is a single cycle of a sine waveform.
+       contsine 
+       				which is a continuous sine waveform. In order to avoid introducing noise into the calculation the amplitude of the waveform is modulated for the first cycle of the sine wave (ramp excitation).
+
+    f1 is the scaling of the maximum amplitude of the waveform (for a #hertzian_dipole the units will be Amps, for a #voltage_source or #transmission_line the units will be Volts).
+
+    f2 is the centre frequency of the waveform (Hertz). In the case of the Gaussian waveform it is related to the pulse width.
+
+    str2 is an identifier for the waveform used to assign it to a source.
+
+For example, to specify the normalised first derivate of a Gaussian waveform with an amplitude of one and a centre frequency of 1.2GHz, use: #waveform: gaussiandotnorm 1 1.2e9 my_gauss_pulse.
+
+这里设置了一种命名为 my_ricker 的墨西哥帽型的波形，幅度为1， 中心频率为 1.5GHz
 #waveform: ricker 1 1.5e9 my_ricker
+
+电偶极子：
+hertzian_dipole:
+Allows you to specify a current density term at an electric field location - the simplest excitation, often referred to as an additive or soft source.
+
+Js=IΔl / ΔxΔyΔz,
+
+where:
+Js 					- is the current density, 
+I  					- is the current,
+Δl 				- is the length of the infinitesimal electric dipole, 
+Δx, Δy, Δz 	- are the spatial resolution of the grid.
+
+Note Δl is set equal to Δx, Δy, or Δz depending on the specified polarisation.
+
+命令格式为
+		hertzian_dipole: c1 f1 f2 f3 str1 [f4 f5]
+
+    c1 is the polarisation of the source and can be x, y, or z.
+    	极化方向
+    f1 f2 f3 are the coordinates (x,y,z) of the source in the model.
+    	位置坐标
+    f4 f5 are optional parameters. 
+    	f4 is a time delay in starting the source. 
+    		启动源的时间延迟
+    	f5 is a time to remove the source. 
+    		移除源的时间
+    	帽默认是全部仿真时间
+    	If the time window is longer than the source removal time then the source will stop after the source removal time. If the source removal time is longer than the time window then the source will be active for the entire time window. If f4 f5 are omitted the source will start at the beginning of time window and stop at the end of the time window.
+    str1 is the identifier of the waveform that should be used with the source.
+    		源的标识符
+
+For example, to use a x-polarised Hertzian dipole with unit amplitude and a 600 MHz centre frequency Ricker waveform, use: #waveform: ricker 1 600e6 my_ricker_pulse and #hertzian_dipole: x 0.05 0.05 0.05 my_ricker_pulse.
+
+下面给定了一个沿z方向极化的赫兹偶极子，坐标为 (0.1, 0.17, 0)m, 电流波形是上面所设置的 my_ricker
+
 #hertzian_dipole: z 0.100 0.170 0 my_ricker
+
+
+
+设置接收点
+
+Allows you to introduce output points into the model. These are locations where the values of the electric and magnetic field components over the number of iterations of the model will be saved to file.
+
+The syntax of the command is:
+命令格式为
+
+		rx: f1 f2 f3 [str1 str2]
+
+    f1 f2 f3 are the coordinates (x,y,z) of the receiver in the model.
+    		接收机位置
+    str1 is the identifier of the receiver.
+    		接收点标识符
+    str2 is a list of outputs with this receiver. It can be any selection from Ex, Ey, Ez, Hx, Hy, Hz, Ix, Iy, or Iz.
+    		输出内容
+
+Note
+
+    When the optional parameters str1 and str2 are not given all the electric and magnetic field components will be output with the receiver point.
+
 #rx: 0.140 0.170 0
 
+
+构造盒子对象
+Allows you to introduce an orthogonal parallelepiped with specific properties into the model. The syntax of the command is:
+
+		box: f1 f2 f3 f4 f5 f6 str1 [c1]
+
+    f1 f2 f3 
+    		are the lower left (x,y,z) coordinates of the parallelepiped, 
+    f4 f5 f6 	
+    		are the upper right (x,y,z) coordinates of the parallelepiped.
+    str1 
+    		is a material identifier that must correspond to material that has already been defined in the input file, or is one of the builtin materials pec or free_space.
+    c1 
+    		is an optional parameter which can be y or n, used to switch on and off dielectric smoothing.
+
+这里设置了一个位于点(0, 0, 0) 和 (0.24, 0.17, 0.002) 之间的一个盒子，材料为 half_space
 #box: 0 0 0 0.240 0.170 0.002 half_space
+
+
+构造圆柱体
+Allows you to introduce a circular cylinder into the model. The orientation of the cylinder axis can be arbitrary, i.e. it does not have align with one of the Cartesian axes of the model. The syntax of the command is:
+
+		cylinder: f1 f2 f3 f4 f5 f6 f7 str1 [c1]
+
+    f1 f2 f3 
+    	are the coordinates (x,y,z) of the centre of one face of the cylinder, and 
+    f4 f5 f6 
+    	are the coordinates (x,y,z) of the centre of the other face.
+    f7 
+    	is the radius of the cylinder.
+    str1 
+    	is a material identifier that must correspond to material that has already been defined in the input file, or is one of the builtin materials pec or free_space.
+    c1 
+    	is an optional parameter which can be y or n, used to switch on and off dielectric smoothing.
+
+For example, to specify a cylinder with its axis in the y direction, a length of 0.7 m, a radius of 100 mm, and that is a perfect electric conductor, use: #cylinder: 0.5 0.1 0.5 0.5 0.8 0.5 0.1 pec.
+这里构造一个理想导体圆柱体， 底面中心为 (0.12, 0.08, 0), 顶面中心为 (0.12, 0.08, 0.002), 半径为 0.01m的圆柱
 #cylinder: 0.120 0.080 0 0.120 0.080 0.002 0.010 pec
 
+输出几何体
+Allows you output to file(s) information about the geometry of model. The file(s) use the open source Visualization ToolKit (VTK) format which can be viewed in many free readers, such as Paraview. The command can be used to create several 3D views of the model which are useful for checking that it has been constructed as desired. The syntax of the command is:
+
+		geometry_view: f1 f2 f3 f4 f5 f6 f7 f8 f9 file1 c1
+
+    f1 f2 f3 
+    	are the lower left (x,y,z) coordinates of the volume of the geometry view in metres.
+    f4 f5 f6 
+    	are the upper right (x,y,z) coordinates of the volume of the geometry view in metres.
+    f7 f8 f9 
+    	are the spatial discretisation of the geometry view in metres. Typically these will be the same as the spatial discretisation of the model but they can be courser if desired.
+    file1 
+    	is the filename of the file where the geometry view will be stored in the same directory as the input file.
+    c1 
+    	can be either n (normal) or f (fine) which specifies whether to output the geometry information on a per-cell basis (n) or a per-cell-edge basis (f). The fine mode should be reserved for viewing detailed parts of the geometry that occupy small volumes, as using this mode can generate geometry files with large file sizes.
+
+这里指定输出 (0, 0, 0) 到 (0.24, 0.21, 0.002) 之间的几何体，离散采样间隔为(0.002, 0.002, 0.002), 输出文件名为 cylinder_half_space.vti, 格式为 逐个单元的常规模式.
 #geometry_view: 0 0 0 0.240 0.210 0.002 0.002 0.002 0.002 cylinder_half_space n
