@@ -20,6 +20,36 @@ import numpy as np
 
 from gprMax.utilities import round_value
 
+def ricker(time, dt, amp=1, freq=None, id=None):
+    chi = np.sqrt(2) / freq
+    zeta = np.pi**2 * freq**2
+    delay = time - chi
+    normalise = 1 / (2 * zeta)
+    ampvalue = - (2 * zeta * (2 * zeta * delay**2 - 1) * np.exp(-zeta * delay**2)) * normalise
+    return amp * ampvalue
+
+
+def gaussian(time, dt, amp=1, freq=None):
+    chi = 1 / freq
+    zeta = 2 * np.pi**2 * freq**2
+    delay = time - chi
+    ampvalue = np.exp(-zeta * delay**2)
+    return amp * ampvalue
+
+
+def waveform(type, amp, freq, id, *args, **kwargs):
+    if callable(type):
+        cls = type
+    else:
+        if hasattr(globals(), type):
+            cls = globals()[type]
+            if callable(cls):
+                return cls(amp, freq, id, *args, **kwargs)
+        return type(amp, freq, id, *args, **kwargs)
+        else:
+            print('\nWaveform: {}'.format(type))
+            print('\nGlobal Variables: {}'.format(globals()))
+            raise NotImplementedError
 
 class Waveform(object):
     """Definitions of waveform shapes that can be used with sources."""

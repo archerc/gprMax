@@ -341,6 +341,7 @@ def run_model(args, currentmodelrun, modelend, numbermodelruns, inputfile, usern
         curdir = os.getcwd()
         os.chdir(inputdirectory)
         output_dir = os.path.abspath(output_dir)
+        print('\noutput_dir: {}\n'.format(output_dir))
         if not os.path.isdir(output_dir):
             os.mkdir(output_dir)
             print('\nmaking outputdirectory: {}'.format(output_dir))
