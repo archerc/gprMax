@@ -42,6 +42,13 @@ from gprMax.utilities import round_value
 from gprMax.waveforms import Waveform
 
 
+def str2float(x):
+    try:
+        return float(x)
+    except ValueError:
+        return x
+
+
 def process_multicmds(multicmds, G):
     """
     Checks the validity of command parameters and creates instances of
@@ -65,20 +72,21 @@ def process_multicmds(multicmds, G):
     if multicmds[cmdname] is not None:
         for cmdinstance in multicmds[cmdname]:
             tmp = cmdinstance.split()
-            if len(tmp) != 4:
-                raise CmdInputError("'" + cmdname + ': ' + ' '.join(tmp) + "'" + ' requires exactly four parameters')
-            if tmp[0].lower() not in Waveform.types:
-                raise CmdInputError("'" + cmdname + ': ' + ' '.join(tmp) + "'" + ' must have one of the following types {}'.format(','.join(Waveform.types)))
-            if float(tmp[2]) <= 0:
+            wtype = tmp[0].lower()
+            wamp = float(tmp[1])
+            wfreq = float(tmp[2])
+            wID = tmp[3]
+            wargs = [str2float(x) for x in tmp[4:]]
+            # if len(tmp) != 4:
+            #     raise CmdInputError("'" + cmdname + ': ' + ' '.join(tmp) + "'" + ' requires exactly four parameters')
+            if wtype not in Waveform.builtin_waveforms:
+                raise CmdInputError("'" + cmdname + ': ' + ' '.join(tmp) + "'" + ' must have one of the following types {}'.format(','.join(Waveform.builtin_waveforms)))
+            if wfreq <= 0:
                 raise CmdInputError("'" + cmdname + ': ' + ' '.join(tmp) + "'" + ' requires an excitation frequency value of greater than zero')
-            if any(x.ID == tmp[3] for x in G.waveforms):
+            if any(x.ID == wID for x in G.waveforms):
                 raise CmdInputError("'" + cmdname + ': ' + ' '.join(tmp) + "'" + ' with ID {} already exists'.format(tmp[3]))
 
-            w = Waveform()
-            w.ID = tmp[3]
-            w.type = tmp[0].lower()
-            w.amp = float(tmp[1])
-            w.freq = float(tmp[2])
+            w = Waveform(wtype, wamp, wfreq, wID, *wargs)
 
             if G.messages:
                 print('Waveform {} of type {} with maximum amplitude scaling {:g}, frequency {:g}Hz created.'.format(w.ID, w.type, w.amp, w.freq))

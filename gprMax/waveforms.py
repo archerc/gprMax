@@ -98,6 +98,13 @@ def impulse(time, dt, amp=1, freq=None, **kwargs):
     return amp * ampvalue
 
 
+def chirp(time, dt, amp=1, freq=None, ID=None,
+               width=1, ramp=0, phase=0, delay=0, **kwargs):
+    phasevalue = 2 * np.pi * freq * time + np.pi * ramp * time ** 2 + phase
+    ampvalue = (abs(time - delay) < width / 2.0) * np.cos(phasevalue)
+    return amp * ampvalue
+
+
 class Waveform(object):
     """Definitions of waveform shapes that can be used with sources."""
 
