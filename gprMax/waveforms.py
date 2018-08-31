@@ -141,7 +141,7 @@ class Waveform(object):
         Returns:
             ampvalue (float): Calculated value for waveform.
         """
-        self.calculate_cofficients()
+        self.calculate_coefficients()
         if callable(self.userfunc):
             return self.userfunc(time, dt)
         if isinstance(self.type, str):
