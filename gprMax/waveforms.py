@@ -98,8 +98,8 @@ def impulse(time, dt, amp=1, freq=None, **kwargs):
     return amp * ampvalue
 
 
-def chirp(time, dt, amp=1, freq=None, ID=None,
-               width=1, ramp=0, phase=0, delay=0, **kwargs):
+def chirp(time, dt, width=1, ramp=0, phase=0, delay=0,
+                amp=1, freq=None, ID=None, **kwargs):
     phasevalue = 2 * np.pi * freq * time + np.pi * ramp * time ** 2 + phase
     ampvalue = (abs(time - delay) < width / 2.0) * np.cos(phasevalue)
     return amp * ampvalue
@@ -120,6 +120,7 @@ class Waveform(object):
         'sine', 
         'contsine', 
         'impulse', 
+        'chirp',
         'user'
     ]
 
@@ -131,7 +132,7 @@ class Waveform(object):
     # gaussiandot, gaussiandotnorm, gaussiandotdot, gaussiandotdotnorm, ricker waveforms have their centre frequencies
     # specified by the user, i.e. they are not derived from the 'base' gaussian
 
-    def __init__(self, type=None, amp=1, freq=None, id=None, **kwargs):
+    def __init__(self, type=None, amp=1, freq=None, id=None, *args, **kwargs):
         self.ID = id
         self.type = type
         self.amp = amp
@@ -139,6 +140,8 @@ class Waveform(object):
         self.userfunc = None
         self.chi = 0
         self.zeta = 0
+        self.args = args
+        self.__dict__.update(**kwargs)
 
     def calculate_coefficients(self):
         """Calculates coefficients (used to calculate values) for specific waveforms."""
@@ -172,6 +175,6 @@ class Waveform(object):
         else:
             func = self.type
         if callable(func):
-            return func(time, dt, **self.__dict__)
+            return func(time, dt, *self.args, **self.__dict__)
         else:
             raise NotImplementedError
