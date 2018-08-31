@@ -21,74 +21,58 @@ import numpy as np
 from gprMax.utilities import round_value
 
 
-def gaussian(time, dt, amp=1, freq=None):
-    chi = 1 / freq
-    zeta = 2 * np.pi**2 * freq**2
+def gaussian(time, dt, amp=1, freq=None, chi=0,  zeta=0, **kwargs):
     delay = time - chi
     ampvalue = np.exp(-zeta * delay**2)
     return amp * ampvalue
 
 
-def gaussiandot(time, dt, amp=1, freq=None):
-    chi = 1 / freq
-    zeta = 2 * np.pi**2 * freq**2
+def gaussiandot(time, dt, amp=1, freq=None, chi=0,  zeta=0, **kwargs):
     delay = time - chi
     ampvalue = -2 * zeta * delay * np.exp(-zeta * delay**2)
     return amp * ampvalue
 
 
-def gaussianprime(time, dt, amp=1, freq=None):
-    chi = 1 / freq
-    zeta = 2 * np.pi**2 * freq**2
+def gaussianprime(time, dt, amp=1, freq=None, chi=0,  zeta=0, **kwargs):
     delay = time - chi
     ampvalue = -2 * zeta * delay * np.exp(-zeta * delay**2)
     return amp * ampvalue
 
 
-def gaussiandotnorm(time, dt, amp=1, freq=None):
-    chi = 1 / freq
-    zeta = 2 * np.pi**2 * freq**2
+def gaussiandotnorm(time, dt, amp=1, freq=None, chi=0,  zeta=0, **kwargs):
     delay = time - chi
     normalise = np.sqrt(np.exp(1) / (2 * zeta))
     ampvalue = -2 * zeta * delay * np.exp(-zeta * delay**2) * normalise
     return amp * ampvalue
 
 
-def gaussiandoubleprime(time, dt, amp=1, freq=None):
-    chi = 1 / freq
-    zeta = 2 * np.pi**2 * freq**2
+def gaussiandoubleprime(time, dt, amp=1, freq=None, chi=0,  zeta=0, **kwargs):
     delay = time - chi
     ampvalue = 2 * zeta * (2 * zeta * delay**2 - 1) * np.exp(-zeta * delay**2)
     return amp * ampvalue
 
 
-def gaussiandotdot(time, dt, amp=1, freq=None):
-    chi = np.sqrt(2) / freq
-    zeta = np.pi**2 * freq**2
+def gaussiandotdot(time, dt, amp=1, freq=None, chi=0,  zeta=0, **kwargs):
     delay = time - chi
     ampvalue = 2 * zeta * (2 * zeta * delay**2 - 1) * np.exp(-zeta * delay**2)
     return amp * ampvalue
 
 
-def gaussiandotdotnorm(time, dt, amp=1, freq=None):
-    chi = np.sqrt(2) / freq
-    zeta = np.pi**2 * freq**2
+def gaussiandotdotnorm(time, dt, amp=1, freq=None, chi=0,  zeta=0, **kwargs):
     delay = time - chi
     normalise = 1 / (2 * zeta)
     ampvalue = 2 * zeta * (2 * zeta * delay**2 - 1) * np.exp(-zeta * delay**2) * normalise
     return amp * ampvalue
 
 
-def ricker(time, dt, amp=1, freq=None, id=None):
-    chi = np.sqrt(2) / freq
-    zeta = np.pi**2 * freq**2
+def ricker(time, dt, amp=1, freq=None, chi=0,  zeta=0, **kwargs):
     delay = time - chi
     normalise = 1 / (2 * zeta)
     ampvalue = - (2 * zeta * (2 * zeta * delay**2 - 1) * np.exp(-zeta * delay**2)) * normalise
     return amp * ampvalue
 
 
-def sine(time, dt, amp=1, freq=None):
+def sine(time, dt, amp=1, freq=None, **kwargs):
     if time * freq > 1:
         ampvalue = 0
     else:
@@ -96,7 +80,7 @@ def sine(time, dt, amp=1, freq=None):
     return amp * ampvalue
 
 
-def contsine(time, dt, amp=1, freq=None):
+def contsine(time, dt, amp=1, freq=None, **kwargs):
     rampamp = 0.25
     ramp = rampamp * time * freq
     if ramp > 1:
@@ -105,7 +89,7 @@ def contsine(time, dt, amp=1, freq=None):
     return amp * ampvalue
 
 
-def impulse(time, dt, amp=1, freq=None):
+def impulse(time, dt, amp=1, freq=None, **kwargs):
     # time < dt condition required to do impulsive magnetic dipole
     if time == 0 or time < dt:
         ampvalue = 1
@@ -133,16 +117,19 @@ class Waveform(object):
         self.amp = amp
         self.freq = freq
         self.userfunc = None
+        self.chi = 0
+        self.zeta = 0
 
-    # def calculate_coefficients(self):
-    #     """Calculates coefficients (used to calculate values) for specific waveforms."""
+    def calculate_coefficients(self):
+        """Calculates coefficients (used to calculate values) for specific waveforms."""
 
-    #     if self.type == 'gaussian' or self.type == 'gaussiandot' or self.type == 'gaussiandotnorm' or self.type == 'gaussianprime' or self.type == 'gaussiandoubleprime':
-    #         self.chi = 1 / self.freq
-    #         self.zeta = 2 * np.pi**2 * self.freq**2
-    #     elif self.type == 'gaussiandotdot' or self.type == 'gaussiandotdotnorm' or self.type == 'ricker':
-    #         self.chi = np.sqrt(2) / self.freq
-    #         self.zeta = np.pi**2 * self.freq**2
+        if self.type in ['gaussian', 'gaussiandot', 'gaussiandotnorm', 
+                    'gaussianprime', 'gaussiandoubleprime']:
+            self.chi = 1 / self.freq
+            self.zeta = 2 * np.pi**2 * self.freq**2
+        elif self.type == 'gaussiandotdot' or self.type == 'gaussiandotdotnorm' or self.type == 'ricker':
+            self.chi = np.sqrt(2) / self.freq
+            self.zeta = np.pi**2 * self.freq**2
 
     def calculate_value(self, time, dt):
         """Calculates value of the waveform at a specific time.
@@ -154,18 +141,20 @@ class Waveform(object):
         Returns:
             ampvalue (float): Calculated value for waveform.
         """
+        self.calculate_cofficients()
         if callable(self.userfunc):
             return self.userfunc(time, dt)
-        if self.type in locals():
-            func = locals()[self.type]
+        if isinstance(self.type, str):
+            if self.type in globals():
+                func = globals()[self.type]
+            else:
+                func = None
         else:
-            print('\nLocal Variables: {}'.format(locals()))
-            raise NotImplementedError
+            func = self.type
         if callable(func):
-            return func(time, dt)
+            return func(time, dt, **self.__dict__)
         else:
-            raise RuntimeError
-        # self.calculate_coefficients()
+            raise NotImplementedError
 
         # # Waveforms
         # if self.type == 'gaussian':
