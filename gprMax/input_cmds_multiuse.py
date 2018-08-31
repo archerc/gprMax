@@ -39,7 +39,7 @@ from gprMax.sources import HertzianDipole
 from gprMax.sources import MagneticDipole
 from gprMax.sources import TransmissionLine
 from gprMax.utilities import round_value
-from gprMax.waveforms import waveform
+from gprMax.waveforms import Waveform
 
 
 def process_multicmds(multicmds, G):
@@ -74,11 +74,11 @@ def process_multicmds(multicmds, G):
             # if any(x.ID == tmp[3] for x in G.waveforms):
             #     raise CmdInputError("'" + cmdname + ': ' + ' '.join(tmp) + "'" + ' with ID {} already exists'.format(tmp[3]))
 
-            w = waveform(tmp[0].lower(), float(tmp[1]), float(tmp[2]), tmp[3], *tmp[4:])
-            # w.ID = tmp[3]
-            # w.type = tmp[0].lower()
-            # w.amp = float(tmp[1])
-            # w.freq = float(tmp[2])
+            w = Waveform()
+            w.ID = tmp[3]
+            w.type = tmp[0].lower()
+            w.amp = float(tmp[1])
+            w.freq = float(tmp[2])
 
             if G.messages:
                 print('Waveform {} of type {} with maximum amplitude scaling {:g}, frequency {:g}Hz created.'.format(w.ID, w.type, w.amp, w.freq))
