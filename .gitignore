@@ -20,3 +20,12 @@ dist/
 
 # Jupyter notebook checkpoints
 .ipynb_checkpoints/
+
+# sublime
+*.sublime-project
+*.sublime-workspace
+
+# output from gprMax
+*.out
+*.in
+*.vti
